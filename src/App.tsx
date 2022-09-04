@@ -2,6 +2,7 @@ import { Icon } from 'solid-heroicons';
 import { trash } from 'solid-heroicons/outline';
 import type { Component } from 'solid-js';
 import { createSignal, For } from 'solid-js';
+import { createStore } from 'solid-js/store';
 
 const App: Component = () => {
   type Task = {
@@ -10,7 +11,8 @@ const App: Component = () => {
     done: boolean;
   };
 
-  const [tasks, setTasks] = createSignal<Task[]>([] as Task[]);
+  // const [tasks, setTasks] = createSignal<Task[]>([] as Task[]);
+  const [tasks, setTasks] = createStore<Task[]>([] as Task[]);
 
   const addTask = (e: Event) => {
     e.preventDefault(); //to prevent the default reload behavior when we submit our form.
@@ -23,13 +25,28 @@ const App: Component = () => {
       done: false,
     };
 
-    setTasks([newTask, ...tasks()]);
+    setTasks([newTask, ...tasks]);
     taskInput.value = '';
   };
 
   const deleteTask = (id: string) => {
-    const newTasks = tasks().filter((task) => task.id !== id);
+    const newTasks = tasks.filter((task) => task.id !== id);
     setTasks(newTasks);
+  };
+
+  const toggleTask = (id: string) => {
+    // const newTasks = tasks.map((task) => {
+    //   if (task.id === id) {
+    //     return { ...task, done: !task.done };
+    //   }
+    //   return task;
+    // });
+    // setTasks(newTasks);
+    setTasks(
+      (task) => task.id === id, // A function to get the particular task we want to update.
+      'done', // The property we want to update.
+      (done) => !done // The value we want to update it to.
+    );
   };
 
   return (
@@ -55,20 +72,26 @@ const App: Component = () => {
 
       <div>
         <h4 class='text-xl mb-4'>Tasks</h4>
-        <For each={tasks()}>
+        <For each={tasks}>
           {(task: Task) => (
-            <div class='flex justify-center space-x-2'>
+            <div class='flex justify-center space-x-2 mb-2'>
               <button
-                class='bg-orange-700 text-white text-sm px-2 rounded'
+                class='bg-orange-700 px-2 py-1 rounded'
                 onClick={() => deleteTask(task.id)}>
                 <Icon path={trash} class='w-5 text-white' />
               </button>
-              <div class='bg-slate-100 px-8 py-1 rounded'>{task.text}</div>
+              <div
+                class={`bg-slate-100 px-8 py-1 rounded ${
+                  task.done && 'line-through text-emerald-600'
+                }`}>
+                {task.text}
+              </div>
               <input
                 type='checkbox'
                 role='button'
                 class='w-6'
                 checked={task.done}
+                onClick={() => toggleTask(task.id)}
               />
             </div>
           )}
